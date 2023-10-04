@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Party Organizer</title>
+  <style>
+
+  </style>
+</head>
+<body>
+  <h1>Party Organizer</h1>
+
+  <form id="party-form">
+    <label for="name">Name:</label>
+    <input type="text" id="name" required>
+
+    <label for="date">Date:</label>
+    <input type="date" id="date" required>
+
+    <label for="time">Time:</label>
+    <input type="text" id="time" required>
+
+    <label for="location">Location:</label>
+    <input type="text" id="location" required>
+
+    <label for="description">Description:</label>
+    <textarea id="description" required></textarea>
+
+    <button type="submit">Add Party</button>
+  </form>
+
+  <ul id="party-list"></ul>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const partyForm = document.getElementById('party-form');
+      const partyList = document.getElementById('party-list');
+
+    
+      const renderParties = (parties) => {
+        partyList.innerHTML = '';
+        parties.forEach(party => {
+          const listItem = document.createElement('li');
+          listItem.innerHTML = `
+            <strong>${party.name}</strong>
+            <br>Date: ${party.date} | Time: ${party.time}
+            <br>Location: ${party.location}
+            <br>Description: ${party.description}
+            <button class="delete-btn" data-id="${party.id}">Delete</button>
+          `;
+          partyList.appendChild(listItem);
+        });
+      };
+
+   
+      fetch('https://api.example.com/parties')
+        .then(response => response.json())
+        .then(data => renderParties(data))
+        .catch(error => console.error('Error fetching parties:', error));
+
+ 
+      partyForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+
+        const formData = new FormData(partyForm);
+        const newParty = {};
+        formData.forEach((value, key) => {
+          newParty[key] = value;
+        });
+
+       
+        fetch('https://api.example.com/parties', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(newParty),
+        })
+          .then(response => response.json())
+          .then(data => {
+          
+            fetch('https://api.example.com/parties')
+              .then(response => response.json())
+              .then(updatedData => renderParties(updatedData))
+              .catch(error => console.error('Error fetching parties:', error));
+          })
+          .catch(error => console.error('Error adding party:', error));
+
+        partyForm.reset(); 
+      });
+
+      
+      partyList.addEventListener('click', (event) => {
+        if (event.target.classList.contains('delete-btn')) {
+          const partyId = event.target.getAttribute('data-id');
+
+          fetch(`https://api.example.com/parties/${partyId}`, {
+            method: 'DELETE',
+          })
+            .then(response => response.json())
+            .then(data => {
+             
+              fetch('https://api.example.com/parties')
+                .then(response => response.json())
+                .then(updatedData => renderParties(updatedData))
+                .catch(error => console.error('Error fetching parties:', error));
+            })
+            .catch(error => console.error('Error deleting party:', error));
+        }
+      });
+    });
+  </script>
+</body>
+</html>
